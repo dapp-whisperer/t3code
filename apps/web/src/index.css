@@ -2627,8 +2627,13 @@ html[data-wallpaper="on"] body::before {
   opacity: var(--wallpaper-tint-opacity, 0.85);
 }
 html[data-wallpaper="on"] .bg-background,
-html[data-wallpaper="on"] .bg-sidebar,
 html[data-wallpaper="on"] .bg-card,
 html[data-wallpaper="on"] .bg-popover {
   background-color: transparent !important;
+}
+/* The sidebar keeps a scrim: it holds the densest small text (repo names,
+   timestamps), and a fully open canvas made those collide with the wallpaper's
+   bright areas. 8% of the image is enough to read as the same surface. */
+html[data-wallpaper="on"] .bg-sidebar {
+  background-color: color-mix(in srgb, var(--wallpaper-tint, #282c34) 92%, transparent) !important;
 }
