@@ -1838,7 +1838,16 @@ const buildDesktopBundlesUnlocked = Effect.fn("buildDesktopBundlesUnlocked")(fun
 ) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const spawnCommand = yield* resolveSpawnCommand("vp", ["run", "build:desktop"]);
+  // Fork: the `build` task compiles the Linux browser-secret helper against host
+  // libsecret headers. When the helper is reused from an existing AppImage, use the
+  // CI bundle task instead (same server/desktop output, helper staged separately).
+  const reuseBrowserSecret = yield* Config.Boolean("T3CODE_DESKTOP_REUSE_BROWSER_SECRET").pipe(
+    Config.withDefault(false),
+  );
+  const spawnCommand = yield* resolveSpawnCommand("vp", [
+    "run",
+    reuseBrowserSecret ? "build:desktop:bundle" : "build:desktop",
+  ]);
   yield* Effect.acquireUseRelease(
     Effect.forEach(releasePackageFiles, (relativePath) =>
       Effect.gen(function* () {
@@ -1931,6 +1940,11 @@ export const preflightLinuxDesktopBuild = Effect.fn("preflightLinuxDesktopBuild"
   ).pipe(Config.withDefault(false));
   const needsRust = !reuseResourceMonitor || !reuseCaptureHelpers;
   const rustTarget = resolveResourceMonitorRustTargets("linux", arch)[0]!;
+  // Fork: an AppVM with no Rust/headers can reuse the helper binary from an
+  // existing AppImage instead of compiling it against libsecret.
+  const reuseBrowserSecret = yield* Config.Boolean("T3CODE_DESKTOP_REUSE_BROWSER_SECRET").pipe(
+    Config.withDefault(false),
+  );
 
   const checks = yield* Effect.all(
     {
@@ -1940,10 +1954,12 @@ export const preflightLinuxDesktopBuild = Effect.fn("preflightLinuxDesktopBuild"
       "rust-target": needsRust ? rustTargetIsInstalled(rustTarget) : Effect.succeed(true),
       cc: desktopBuildProbeSucceeds(ChildProcess.make("cc", ["--version"]), "cc"),
       make: desktopBuildProbeSucceeds(ChildProcess.make("make", ["--version"]), "make"),
-      libsecret: desktopBuildProbeSucceeds(
-        ChildProcess.make("pkg-config", ["--exists", "libsecret-1"]),
-        "libsecret",
-      ),
+      libsecret: reuseBrowserSecret
+        ? Effect.succeed(true)
+        : desktopBuildProbeSucceeds(
+            ChildProcess.make("pkg-config", ["--exists", "libsecret-1"]),
+            "libsecret",
+          ),
       imagemagick: Effect.all([
         desktopBuildProbeSucceeds(ChildProcess.make("magick", ["-version"]), "magick"),
         desktopBuildProbeSucceeds(ChildProcess.make("convert", ["-version"]), "convert"),
@@ -2444,6 +2460,17 @@ export const stageBrowserSecret = Effect.fn("stageBrowserSecret")(function* (inp
     return yield* new LinuxBrowserSecretHostError({ hostPlatform });
   }
   const path = yield* Path.Path;
+  const fs = yield* FileSystem.FileSystem;
+  // Fork: reuse a helper binary extracted from an existing AppImage rather than
+  // compiling against libsecret headers that this AppVM does not carry.
+  const prebuilt = yield* Config.String("T3CODE_DESKTOP_BROWSER_SECRET_BINARY").pipe(Config.option);
+  if (Option.isSome(prebuilt)) {
+    const destination = path.join(input.stageResourcesDir, "browser-secret", "t3-browser-secret");
+    yield* fs.makeDirectory(path.dirname(destination), { recursive: true });
+    yield* fs.copy(prebuilt.value, destination);
+    yield* fs.chmod(destination, 0o755);
+    return;
+  }
   yield* runCommand(
     ChildProcess.make(
       "node",
@@ -2907,7 +2934,9 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
     const repoRoot = yield* RepoRoot;
     buildConfig.afterPack = path.join(repoRoot, "scripts/linux-after-pack.ts");
     buildConfig.linux = {
-      target: target === "AppImage" ? [target, "deb"] : [target],
+      // Fork: AppImage only. The deb is produced by fpm's bundled Ruby, which needs
+      // libcrypt.so.1 (libxcrypt-compat) on Fedora; this fork ships the AppImage.
+      target: [target],
       executableName: "t3code",
       icon: "icons",
       category: "Development",

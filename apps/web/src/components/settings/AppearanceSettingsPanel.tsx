@@ -9,9 +9,13 @@ import {
   MAX_APPEARANCE_CONTRAST,
   MAX_GLASS_OPACITY,
   MAX_PANEL_ANIMATION_DURATION_MS,
+  MAX_WALLPAPER_BRIGHTNESS,
+  MAX_WALLPAPER_TINT_OPACITY,
   MIN_APPEARANCE_CONTRAST,
   MIN_GLASS_OPACITY,
   MIN_PANEL_ANIMATION_DURATION_MS,
+  MIN_WALLPAPER_BRIGHTNESS,
+  MIN_WALLPAPER_TINT_OPACITY,
 } from "@t3tools/contracts/settings";
 import {
   resolveSidebarStageBackdropVariant,
@@ -126,6 +130,20 @@ export function AppearanceSettingsPanel() {
   const glassOpacitySliderStyle = {
     "--settings-slider-progress": `${glassOpacityRatio * 100}%`,
     "--settings-slider-fill-offset": `${0.5 - glassOpacityRatio}rem`,
+  } as CSSProperties;
+  const wallpaperBrightnessRatio =
+    (settings.wallpaperBrightness - MIN_WALLPAPER_BRIGHTNESS) /
+    (MAX_WALLPAPER_BRIGHTNESS - MIN_WALLPAPER_BRIGHTNESS);
+  const wallpaperBrightnessSliderStyle = {
+    "--settings-slider-progress": `${wallpaperBrightnessRatio * 100}%`,
+    "--settings-slider-fill-offset": `${0.5 - wallpaperBrightnessRatio}rem`,
+  } as CSSProperties;
+  const wallpaperTintOpacityRatio =
+    (settings.wallpaperTintOpacity - MIN_WALLPAPER_TINT_OPACITY) /
+    (MAX_WALLPAPER_TINT_OPACITY - MIN_WALLPAPER_TINT_OPACITY);
+  const wallpaperTintOpacitySliderStyle = {
+    "--settings-slider-progress": `${wallpaperTintOpacityRatio * 100}%`,
+    "--settings-slider-fill-offset": `${0.5 - wallpaperTintOpacityRatio}rem`,
   } as CSSProperties;
   const appearanceContrastRatio =
     (settings.appearanceContrast - MIN_APPEARANCE_CONTRAST) /
@@ -252,6 +270,124 @@ export function AppearanceSettingsPanel() {
                 style={glassOpacitySliderStyle}
                 type="range"
                 value={settings.glassOpacity}
+              />
+            </div>
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("setting-wallpaper")}
+          description="Paint the built-in wallpaper behind the app, like the WezTerm background layers."
+          resetAction={
+            settings.wallpaperEnabled !== DEFAULT_UNIFIED_SETTINGS.wallpaperEnabled ? (
+              <SettingResetButton
+                label="wallpaper"
+                onClick={() =>
+                  updateSettings({ wallpaperEnabled: DEFAULT_UNIFIED_SETTINGS.wallpaperEnabled })
+                }
+              />
+            ) : null
+          }
+          control={
+            <Switch
+              aria-label="Wallpaper"
+              checked={settings.wallpaperEnabled}
+              onCheckedChange={(checked) => updateSettings({ wallpaperEnabled: Boolean(checked) })}
+            />
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("setting-wallpaper-brightness")}
+          description="How much of the wallpaper shows through. Lower is darker."
+          resetAction={
+            settings.wallpaperBrightness !== DEFAULT_UNIFIED_SETTINGS.wallpaperBrightness ? (
+              <SettingResetButton
+                label="wallpaper brightness"
+                onClick={() =>
+                  updateSettings({
+                    wallpaperBrightness: DEFAULT_UNIFIED_SETTINGS.wallpaperBrightness,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <div className="flex w-full items-center gap-3 sm:w-52">
+              <output
+                className="min-w-12 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
+                htmlFor="wallpaper-brightness"
+              >
+                {settings.wallpaperBrightness}%
+              </output>
+              <input
+                aria-label="Wallpaper brightness"
+                className="settings-slider min-w-0 flex-1"
+                id="wallpaper-brightness"
+                max={MAX_WALLPAPER_BRIGHTNESS}
+                min={MIN_WALLPAPER_BRIGHTNESS}
+                onChange={(event) => {
+                  const wallpaperBrightness = Number(event.currentTarget.value);
+                  if (
+                    Number.isInteger(wallpaperBrightness) &&
+                    wallpaperBrightness >= MIN_WALLPAPER_BRIGHTNESS &&
+                    wallpaperBrightness <= MAX_WALLPAPER_BRIGHTNESS
+                  ) {
+                    updateSettings({ wallpaperBrightness });
+                  }
+                }}
+                step={5}
+                style={wallpaperBrightnessSliderStyle}
+                type="range"
+                value={settings.wallpaperBrightness}
+              />
+            </div>
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("setting-wallpaper-tint-opacity")}
+          description="Strength of the theme colour laid over the wallpaper."
+          resetAction={
+            settings.wallpaperTintOpacity !== DEFAULT_UNIFIED_SETTINGS.wallpaperTintOpacity ? (
+              <SettingResetButton
+                label="wallpaper tint"
+                onClick={() =>
+                  updateSettings({
+                    wallpaperTintOpacity: DEFAULT_UNIFIED_SETTINGS.wallpaperTintOpacity,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <div className="flex w-full items-center gap-3 sm:w-52">
+              <output
+                className="min-w-12 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
+                htmlFor="wallpaper-tint-opacity"
+              >
+                {settings.wallpaperTintOpacity}%
+              </output>
+              <input
+                aria-label="Wallpaper tint"
+                className="settings-slider min-w-0 flex-1"
+                id="wallpaper-tint-opacity"
+                max={MAX_WALLPAPER_TINT_OPACITY}
+                min={MIN_WALLPAPER_TINT_OPACITY}
+                onChange={(event) => {
+                  const wallpaperTintOpacity = Number(event.currentTarget.value);
+                  if (
+                    Number.isInteger(wallpaperTintOpacity) &&
+                    wallpaperTintOpacity >= MIN_WALLPAPER_TINT_OPACITY &&
+                    wallpaperTintOpacity <= MAX_WALLPAPER_TINT_OPACITY
+                  ) {
+                    updateSettings({ wallpaperTintOpacity });
+                  }
+                }}
+                step={5}
+                style={wallpaperTintOpacitySliderStyle}
+                type="range"
+                value={settings.wallpaperTintOpacity}
               />
             </div>
           }

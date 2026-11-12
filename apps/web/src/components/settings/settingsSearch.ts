@@ -336,6 +336,24 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["transparent transparency solid menus dialogs composer"],
   },
   {
+    id: "setting-wallpaper",
+    title: "Wallpaper",
+    to: "/settings/appearance",
+    searchTerms: ["background image photo wezterm backdrop wallpaper transparent"],
+  },
+  {
+    id: "setting-wallpaper-brightness",
+    title: "Wallpaper brightness",
+    to: "/settings/appearance",
+    searchTerms: ["background dim dark brightness wallpaper"],
+  },
+  {
+    id: "setting-wallpaper-tint-opacity",
+    title: "Wallpaper tint",
+    to: "/settings/appearance",
+    searchTerms: ["background tint overlay colour wallpaper"],
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/diffs",

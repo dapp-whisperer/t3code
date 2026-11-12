@@ -49,3 +49,6 @@ node_modules/
 
 # pnpm content-addressable store; never belongs in the repo.
 .pnpm-store/
+
+# Fork: baked at build time from ~/.config/wezterm/background.jpg
+apps/web/public/wallpaper.jpg

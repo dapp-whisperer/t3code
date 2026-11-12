@@ -145,6 +145,29 @@ export const GlassOpacity = Schema.Int.check(
 export type GlassOpacity = typeof GlassOpacity.Type;
 const DEFAULT_GLASS_OPACITY: GlassOpacity = 80;
 
+// Fork: wallpaper layers mirror wezterm/.config/wezterm/wezterm.lua, which dims
+// the image to 25% and lays its theme colour over it at 85%. Percent integers keep
+// the settings UI identical in shape to the glass-opacity slider.
+export const MIN_WALLPAPER_BRIGHTNESS = 0;
+export const MAX_WALLPAPER_BRIGHTNESS = 100;
+export const WallpaperBrightness = Schema.Int.check(
+  Schema.isBetween({ minimum: MIN_WALLPAPER_BRIGHTNESS, maximum: MAX_WALLPAPER_BRIGHTNESS }),
+);
+export type WallpaperBrightness = typeof WallpaperBrightness.Type;
+const DEFAULT_WALLPAPER_BRIGHTNESS: WallpaperBrightness = 25;
+
+export const MIN_WALLPAPER_TINT_OPACITY = 0;
+export const MAX_WALLPAPER_TINT_OPACITY = 100;
+export const WallpaperTintOpacity = Schema.Int.check(
+  Schema.isBetween({ minimum: MIN_WALLPAPER_TINT_OPACITY, maximum: MAX_WALLPAPER_TINT_OPACITY }),
+);
+export type WallpaperTintOpacity = typeof WallpaperTintOpacity.Type;
+const DEFAULT_WALLPAPER_TINT_OPACITY: WallpaperTintOpacity = 85;
+
+export const WallpaperTint = Schema.String.check(Schema.isPattern(/^#[0-9a-fA-F]{6}$/u));
+export type WallpaperTint = typeof WallpaperTint.Type;
+const DEFAULT_WALLPAPER_TINT: WallpaperTint = "#282c34";
+
 export const MIN_APPEARANCE_CONTRAST = 50;
 export const MAX_APPEARANCE_CONTRAST = 200;
 export const AppearanceContrast = Schema.Int.check(
@@ -473,6 +496,16 @@ export const ClientSettingsSchema = Schema.Struct({
   ),
   glassOpacity: GlassOpacity.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_GLASS_OPACITY)),
+  ),
+  wallpaperEnabled: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(true))),
+  wallpaperBrightness: WallpaperBrightness.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_WALLPAPER_BRIGHTNESS)),
+  ),
+  wallpaperTint: WallpaperTint.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_WALLPAPER_TINT)),
+  ),
+  wallpaperTintOpacity: WallpaperTintOpacity.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_WALLPAPER_TINT_OPACITY)),
   ),
   fontSizeInterface: InterfaceFontSize.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_INTERFACE_FONT_SIZE)),
@@ -2029,6 +2062,10 @@ export const ClientSettingsPatch = Schema.Struct({
   diffLayout: Schema.optionalKey(DiffLayout),
   environmentIdentificationMode: Schema.optionalKey(EnvironmentIdentificationMode),
   glassOpacity: Schema.optionalKey(GlassOpacity),
+  wallpaperEnabled: Schema.optionalKey(Schema.Boolean),
+  wallpaperBrightness: Schema.optionalKey(WallpaperBrightness),
+  wallpaperTint: Schema.optionalKey(WallpaperTint),
+  wallpaperTintOpacity: Schema.optionalKey(WallpaperTintOpacity),
   onboardingCompletedAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
   fontSizeInterface: Schema.optionalKey(InterfaceFontSize),
   fontSizePrompt: Schema.optionalKey(PromptFontSize),

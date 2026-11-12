@@ -65,6 +65,37 @@ import { registerOpenFavoriteEditorCommand } from "./components/chat/OpenInPicke
 import { environmentThreadShells, threadEnvironment } from "./state/threads";
 import { resolveActiveThreadRouteRef, resolveThreadRouteTarget } from "./threadRoutes";
 
+const WALLPAPER_DEFAULT_TINT = "#282c34";
+
+/**
+ * Fork: paints the WezTerm-style wallpaper. WezTerm dims the image to
+ * `brightness` and then lays `tint` over it at `tintOpacity`; one tint layer at
+ * alpha `1 - (1 - tintOpacity) * brightness` over the undimmed image is the same
+ * pixels, which keeps both knobs independent sliders and one paint layer.
+ */
+function applyWallpaperAppearance(
+  root: HTMLElement,
+  settings: {
+    readonly wallpaperEnabled: boolean;
+    readonly wallpaperBrightness: number;
+    readonly wallpaperTint: string;
+    readonly wallpaperTintOpacity: number;
+  },
+): void {
+  if (!settings.wallpaperEnabled) {
+    delete root.dataset.wallpaper;
+    root.style.removeProperty("--wallpaper-tint");
+    root.style.removeProperty("--wallpaper-tint-opacity");
+    return;
+  }
+  const brightness = settings.wallpaperBrightness / 100;
+  const tintOpacity = settings.wallpaperTintOpacity / 100;
+  const alpha = Math.min(1, Math.max(0, 1 - (1 - tintOpacity) * brightness));
+  root.dataset.wallpaper = "on";
+  root.style.setProperty("--wallpaper-tint", settings.wallpaperTint || WALLPAPER_DEFAULT_TINT);
+  root.style.setProperty("--wallpaper-tint-opacity", alpha.toFixed(4));
+}
+
 /** Writes appearance settings onto the document, touching only the groups that changed. */
 function startClientAppearance(): void {
   const root = document.documentElement;
@@ -97,6 +128,14 @@ function startClientAppearance(): void {
       } else {
         root.style.removeProperty("--glass-blur");
       }
+    }
+    if (
+      previous?.wallpaperEnabled !== settings.wallpaperEnabled ||
+      previous?.wallpaperBrightness !== settings.wallpaperBrightness ||
+      previous?.wallpaperTint !== settings.wallpaperTint ||
+      previous?.wallpaperTintOpacity !== settings.wallpaperTintOpacity
+    ) {
+      applyWallpaperAppearance(root, settings);
     }
     if (
       previous?.fontFamilySans !== settings.fontFamilySans ||
