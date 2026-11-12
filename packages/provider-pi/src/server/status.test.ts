@@ -124,6 +124,7 @@ const settings = {
   binaryPath: "pi",
   launchArgs: "",
   customModels: [],
+  e2eeOnly: false,
 } as const;
 
 describe("PiProvider", () => {
@@ -206,6 +207,24 @@ describe("PiProvider", () => {
       assert.deepEqual(
         snapshot.models.map((model) => model.slug),
         ["default"],
+      );
+    }).pipe(Effect.provide(NodeServices.layer)),
+  );
+
+  it.effect("shows only E2EE models when the fork's e2eeOnly policy is on", () =>
+    Effect.gen(function* () {
+      const spawner = yield* piDiscoverySpawner({
+        models: [
+          { provider: "venice", id: "e2ee-deepseek-v4-flash", name: "DeepSeek V4 Flash (TEE)" },
+          { provider: "venice", id: "deepseek-v4-pro", name: "DeepSeek V4 Pro" },
+        ],
+      });
+      const snapshot = yield* checkPiProviderStatus({ ...settings, e2eeOnly: true }).pipe(
+        Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, spawner),
+      );
+      assert.deepEqual(
+        snapshot.models.map((model) => model.slug),
+        ["default", "venice/e2ee-deepseek-v4-flash"],
       );
     }).pipe(Effect.provide(NodeServices.layer)),
   );

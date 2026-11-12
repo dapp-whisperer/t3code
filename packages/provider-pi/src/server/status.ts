@@ -76,6 +76,12 @@ const PI_DEFAULT_MODEL: ServerProviderModel = {
   capabilities: EMPTY_PI_MODEL_CAPABILITIES,
 };
 
+/**
+ * This fork mirrors the OpenCode provider policy: only E2EE/TEE models are
+ * selectable. Pi still reports its full catalog, so filter it here.
+ */
+const E2EE_MODEL_ID = /^e2ee-/i;
+
 interface PiDiscovery extends PiDiscoveredCommands {
   readonly models: ReadonlyArray<ServerProviderModel>;
   readonly authenticated: boolean;
@@ -97,6 +103,7 @@ function piModelsFromSettings(
 function parseDiscoveredModels(
   data: unknown,
   state: unknown,
+  e2eeOnly = false,
 ): Result.Result<ReadonlyArray<ServerProviderModel>, PiRpcError> {
   const models = recordField(data, "models");
   if (!Array.isArray(models)) {
@@ -117,6 +124,7 @@ function parseDiscoveredModels(
         new PiRpcError({ operation: "get_available_models", detail: "Invalid model identity" }),
       );
     }
+    if (e2eeOnly && !E2EE_MODEL_ID.test(id)) continue;
     const slug = `${provider}/${id}`;
     if (seen.has(slug)) continue;
     seen.add(slug);
@@ -176,7 +184,9 @@ const discoverPiViaRpc = Effect.fn("PiProviderStatus.discoverPiViaRpc")(function
   const commandsData = yield* connection
     .request({ type: "get_commands" })
     .pipe(Effect.orElseSucceed(() => undefined));
-  const discoveredModels = yield* Effect.fromResult(parseDiscoveredModels(modelsData, stateData));
+  const discoveredModels = yield* Effect.fromResult(
+    parseDiscoveredModels(modelsData, stateData, piSettings.e2eeOnly),
+  );
   const { slashCommands, skills } = parsePiDiscoveredCommands(commandsData);
   // Pi lists only models of providers it holds credentials for, including extension, virtual and
   // --api-key ones. Turns need only the provider's credentials, so uncatalogued model ids still run.
