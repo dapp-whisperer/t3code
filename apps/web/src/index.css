@@ -732,39 +732,7 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   body {
     background-color: var(--app-chrome-background);
   }
-  /* Fork: WezTerm-style wallpaper. The image is baked into the build at
-     apps/web/public/wallpaper.jpg because the renderer cannot read file:// and the
-     desktop CSP only allows data:/blob:/self images. Layers mirror wezterm.lua:
-     dim the image, lay the theme colour over it at its configured opacity. The
-     tint is applied as an alpha-composited ::before so brightness and opacity
-     stay independent sliders; the canvas itself keeps an opaque tint colour, so
-     an unpainted frame can never show the white Electron window background. */
-  html[data-wallpaper="on"] {
-    background-color: var(--wallpaper-tint, #282c34);
-    background-image: url("/wallpaper.jpg");
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-  }
-  html[data-wallpaper="on"] body {
-    background-color: transparent;
-  }
-  html[data-wallpaper="on"] body::before {
-    content: "";
-    pointer-events: none;
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background: var(--wallpaper-tint, #282c34);
-    opacity: var(--wallpaper-tint-opacity, 0.85);
-  }
-  html[data-wallpaper="on"] .bg-background,
-  html[data-wallpaper="on"] .bg-sidebar,
-  html[data-wallpaper="on"] .bg-card,
-  html[data-wallpaper="on"] .bg-popover {
-    background-color: transparent;
-  }
+
   body {
     @apply text-foreground relative;
   }
@@ -2628,4 +2596,39 @@ code {
 [data-workspace-keyboard-focus]:focus {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
+}
+
+/* Fork: WezTerm-style wallpaper, kept OUTSIDE @layer base and written with
+   !important on purpose. Two things outrank a plain base-layer rule here:
+   the app writes inline background-color on <html>/<body> (theme boot) and the
+   shell classes are Tailwind utilities, which live in a later cascade layer than
+   base. The old DevTools injector only worked because an unlayered <style> tag
+   beats every layer; these rules reproduce that from source.
+   The tint floor stays opaque on the canvas so an unpainted frame can never show
+   the white Electron window background. */
+html[data-wallpaper="on"] {
+  background-color: var(--wallpaper-tint, #282c34) !important;
+  background-image: url("/wallpaper.jpg");
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+html[data-wallpaper="on"] body {
+  background-color: transparent !important;
+}
+html[data-wallpaper="on"] body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--wallpaper-tint, #282c34);
+  opacity: var(--wallpaper-tint-opacity, 0.85);
+}
+html[data-wallpaper="on"] .bg-background,
+html[data-wallpaper="on"] .bg-sidebar,
+html[data-wallpaper="on"] .bg-card,
+html[data-wallpaper="on"] .bg-popover {
+  background-color: transparent !important;
 }

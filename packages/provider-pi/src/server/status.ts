@@ -81,6 +81,8 @@ const PI_DEFAULT_MODEL: ServerProviderModel = {
  * selectable. Pi still reports its full catalog, so filter it here.
  */
 const E2EE_MODEL_ID = /^e2ee-/i;
+/** Pi's configured default; the model a new T3 thread inherits in the E2EE-only picker. */
+const PI_E2EE_DEFAULT_MODEL = "venice/e2ee-deepseek-v4-1-flash-1017-abliterated";
 
 interface PiDiscovery extends PiDiscoveredCommands {
   readonly models: ReadonlyArray<ServerProviderModel>;
@@ -92,9 +94,13 @@ interface PiDiscovery extends PiDiscoveredCommands {
 function piModelsFromSettings(
   customModels: ReadonlyArray<CustomModelSetting> | undefined,
   discovered: ReadonlyArray<ServerProviderModel> = [],
+  options?: { readonly hideDefault?: boolean },
 ): ReadonlyArray<ServerProviderModel> {
+  const defaultModel = options?.hideDefault
+    ? { ...PI_DEFAULT_MODEL, hidden: true }
+    : PI_DEFAULT_MODEL;
   return providerModelsFromSettings(
-    [PI_DEFAULT_MODEL, ...discovered],
+    [defaultModel, ...discovered],
     customModels ?? [],
     EMPTY_PI_MODEL_CAPABILITIES,
   );
@@ -512,7 +518,15 @@ export const checkPiProviderStatus = Effect.fn("checkPiProviderStatus")(function
   }
 
   const discovery = discoveryExit.value.value;
-  const models = piModelsFromSettings(piSettings.customModels, discovery.models);
+  const e2eeOnly = piSettings.e2eeOnly;
+  const discoveredModels = e2eeOnly
+    ? discovery.models.map((model) =>
+        model.slug === PI_E2EE_DEFAULT_MODEL ? { ...model, isDefault: true } : model,
+      )
+    : discovery.models;
+  const models = piModelsFromSettings(piSettings.customModels, discoveredModels, {
+    hideDefault: e2eeOnly && discoveredModels.length > 0,
+  });
   const message = !discovery.authenticated
     ? "Pi has no usable models. Run `pi` in a terminal and use /login, or configure an API key in ~/.pi/agent."
     : discovery.unavailableActiveModel === undefined

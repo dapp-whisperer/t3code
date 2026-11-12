@@ -215,7 +215,11 @@ describe("PiProvider", () => {
     Effect.gen(function* () {
       const spawner = yield* piDiscoverySpawner({
         models: [
-          { provider: "venice", id: "e2ee-deepseek-v4-flash", name: "DeepSeek V4 Flash (TEE)" },
+          {
+            provider: "venice",
+            id: "e2ee-deepseek-v4-1-flash-1017-abliterated",
+            name: "DeepSeek V4.1 Flash 1017 Abliterated (TEE)",
+          },
           { provider: "venice", id: "deepseek-v4-pro", name: "DeepSeek V4 Pro" },
         ],
       });
@@ -223,8 +227,28 @@ describe("PiProvider", () => {
         Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, spawner),
       );
       assert.deepEqual(
+        snapshot.models.filter((model) => model.hidden !== true).map((model) => model.slug),
+        ["venice/e2ee-deepseek-v4-1-flash-1017-abliterated"],
+      );
+      assert.equal(snapshot.models.find((model) => model.slug === "default")?.hidden, true);
+      assert.equal(
+        snapshot.models.find(
+          (model) => model.slug === "venice/e2ee-deepseek-v4-1-flash-1017-abliterated",
+        )?.isDefault,
+        true,
+      );
+    }).pipe(Effect.provide(NodeServices.layer)),
+  );
+
+  it.effect("keeps the synthetic default when E2EE discovery returns nothing", () =>
+    Effect.gen(function* () {
+      const spawner = yield* piDiscoverySpawner({ models: [] });
+      const snapshot = yield* checkPiProviderStatus({ ...settings, e2eeOnly: true }).pipe(
+        Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, spawner),
+      );
+      assert.deepEqual(
         snapshot.models.map((model) => model.slug),
-        ["default", "venice/e2ee-deepseek-v4-flash"],
+        ["default"],
       );
     }).pipe(Effect.provide(NodeServices.layer)),
   );
