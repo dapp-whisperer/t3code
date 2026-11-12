@@ -200,6 +200,8 @@ export function renderGhosttySnapshot(options: {
   readonly selectionBackground?: string;
   readonly hoveredLinkRange?: GhosttyCellRange | null;
   readonly originY?: number;
+  /** Fork: clear instead of painting the default background, so the wallpaper shows. */
+  readonly transparentBackground?: boolean;
 }): void {
   const {
     context,
@@ -216,6 +218,7 @@ export function renderGhosttySnapshot(options: {
   const selectionBackground = options.selectionBackground ?? DEFAULT_SELECTION_BACKGROUND;
   const hoveredLinkRange = options.hoveredLinkRange ?? null;
   const originY = options.originY ?? padding;
+  const transparentBackground = options.transparentBackground ?? false;
   // Rows start on whole device pixels and clear the full canvas width, so repainting
   // a row replaces every pixel the last frame drew in it, including a cursor's edges.
   const transform = context.getTransform();
@@ -240,8 +243,12 @@ export function renderGhosttySnapshot(options: {
   if (forceFull) {
     context.save();
     context.resetTransform();
-    context.fillStyle = cssColor(snapshot.background);
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+    if (transparentBackground) {
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    } else {
+      context.fillStyle = cssColor(snapshot.background);
+      context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+    }
     context.restore();
   }
 
@@ -252,8 +259,12 @@ export function renderGhosttySnapshot(options: {
     const top = rowTop(rowIndex);
     const height = rowTop(rowIndex + 1) - top;
 
-    context.fillStyle = cssColor(snapshot.background);
-    context.fillRect(0, top, rowWidth, height);
+    if (transparentBackground) {
+      context.clearRect(0, top, rowWidth, height);
+    } else {
+      context.fillStyle = cssColor(snapshot.background);
+      context.fillRect(0, top, rowWidth, height);
+    }
 
     let backgroundStart = 0;
     while (backgroundStart < row.cells.length) {

@@ -84,6 +84,8 @@ export interface GhosttyTheme {
   readonly cursor: GhosttyColor;
   readonly palette?: readonly GhosttyColor[];
   readonly selectionBackground?: string;
+  /** Fork: leave the default background transparent so the app wallpaper shows. */
+  readonly transparentBackground?: boolean;
 }
 
 export interface GhosttyCell {

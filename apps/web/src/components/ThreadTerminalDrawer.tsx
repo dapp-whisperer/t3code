@@ -370,6 +370,9 @@ export function terminalThemeFromApp(mountElement?: HTMLElement | null): Ghostty
     isDark ? "rgba(180, 203, 255, 0.25)" : "rgba(37, 63, 99, 0.2)",
   );
   return {
+    // Fork: the wallpaper is painted on the root canvas, so the terminal can share it
+    // by leaving its default background unpainted.
+    transparentBackground: document.documentElement.dataset.wallpaper === "on",
     background: parseTerminalColor(
       terminalBackground,
       isDark ? { r: 14, g: 18, b: 24 } : { r: 255, g: 255, b: 255 },
