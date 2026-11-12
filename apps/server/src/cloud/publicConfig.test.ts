@@ -55,6 +55,20 @@ it.effect("derives direct Clerk OAuth endpoints from statically injected public 
   }),
 );
 
+it("fork default leaves relay tracing off until telemetry is opted in", () => {
+  const fallback = {
+    tracesUrl: "https://embedded.example.test/v1/traces",
+    tracesDataset: "embedded-dataset",
+    tracesToken: "embedded-token",
+  };
+
+  assert.equal(resolveRelayClientTracingConfig({}, fallback), null);
+  assert.deepEqual(
+    resolveRelayClientTracingConfig({ T3CODE_TELEMETRY_ENABLED: "true" }, fallback),
+    fallback,
+  );
+});
+
 it("product opt-out disables relay tracing with either built-in or runtime credentials", () => {
   const fallback = {
     tracesUrl: "https://embedded.example.test/v1/traces",
