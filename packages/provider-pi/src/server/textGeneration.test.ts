@@ -251,7 +251,7 @@ it.effect.each([
         version,
       );
       const textGeneration = yield* makePiTextGeneration(
-        { enabled: true, binaryPath: "pi", launchArgs: "", customModels: [] },
+        { enabled: true, binaryPath: "pi", launchArgs: "", customModels: [], e2eeOnly: false },
         {},
       ).pipe(Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, pi.spawner));
 
@@ -302,7 +302,7 @@ it.effect("generates at Pi's default level when Pi rejects the saved thinking le
       'Thinking level "max" is not supported by demo/demo-model',
     );
     const textGeneration = yield* makePiTextGeneration(
-      { enabled: true, binaryPath: "pi", launchArgs: "", customModels: [] },
+      { enabled: true, binaryPath: "pi", launchArgs: "", customModels: [], e2eeOnly: false },
       {},
     ).pipe(Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, pi.spawner));
 
