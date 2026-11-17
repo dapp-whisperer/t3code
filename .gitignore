@@ -52,3 +52,4 @@ node_modules/
 
 # Fork: baked at build time from ~/.config/wezterm/background.jpg
 apps/web/public/wallpaper.jpg
+/packages/ssh/.ssh-launcher-test-*/
